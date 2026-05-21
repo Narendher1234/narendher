@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html >
+<body>
+     <form>
+        <label>username:</label>
+        <input type="number" placeholder="enter username" name="usrename" required maxlength="10" minlenght="5">
+        <input type="button" value="submit">
+     </form>
+</body>
+</html>

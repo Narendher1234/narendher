@@ -22,18 +22,11 @@ export default function TeacherDashboard() {
     // AUTH
     useEffect(() => {
 
-        const token = localStorage.getItem("token");
+        const teacherData = localStorage.getItem("teacher");
         const role = localStorage.getItem("role");
 
-        if (!token) {
+        if (!teacherData || role !== "teacher") {
             alert("Please Login First");
-            navigate("/");
-            return;
-        }
-
-        if (role !== "teacher") {
-            alert("Only Teacher Can Access");
-            localStorage.clear();
             navigate("/");
             return;
         }
@@ -46,15 +39,8 @@ export default function TeacherDashboard() {
 
         try {
 
-            const token = localStorage.getItem("token");
-
-            const res = await axios.get(
-                "http://127.0.0.1:8000/api/submissions/",
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
+const res = await axios.get(
+            "http://127.0.0.1:8000/api/submissions/"
             );
 
             setData(res.data);
@@ -70,8 +56,6 @@ export default function TeacherDashboard() {
             alert("Fill all fields");
             return;
         }
-
-        const token = localStorage.getItem("token");
 
         const formData = new FormData();
         formData.append("subject", subject);
@@ -91,7 +75,6 @@ export default function TeacherDashboard() {
             formData,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data"
                 }
             }
@@ -107,19 +90,12 @@ export default function TeacherDashboard() {
 
     const saveEvaluation = async () => {
 
-        const token = localStorage.getItem("token");
-
         await axios.patch(
             `http://127.0.0.1:8000/api/submissions/${selected.id}/`,
             {
                 marks,
                 feedback,
                 status: "Evaluated"
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
             }
         );
 
@@ -148,6 +124,7 @@ export default function TeacherDashboard() {
                 <div style={{ display: "flex", gap: "10px" }}>
                     <button style={btnLight} onClick={() => setView("dashboard")}>Dashboard</button>
                     <button style={btnYellow} onClick={() => setView("evaluation")}>Evaluation</button>
+                    <button style={btnBlue} onClick={() => navigate("/teacher-register")}>Register Teacher</button>
                     <button style={btnRed} onClick={logout}>Logout</button>
                 </div>
             </div>

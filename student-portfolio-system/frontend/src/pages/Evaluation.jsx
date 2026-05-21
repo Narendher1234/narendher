@@ -7,8 +7,10 @@ export default function Evaluation() {
     const navigate = useNavigate();
 
     // ================= STATES =================
+
     const [data, setData] = useState([]);
     const [selected, setSelected] = useState(null);
+
     const [loading, setLoading] = useState(true);
 
     const [codeQuality, setCodeQuality] = useState("");
@@ -20,81 +22,83 @@ export default function Evaluation() {
     const [errorMsg, setErrorMsg] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
 
-    // ================= AUTH =================
+    // ================= LOGIN CHECK =================
+
     useEffect(() => {
 
+        // CHECK LOGIN
         const teacher = localStorage.getItem("teacher");
 
-        if (!teacher) {
-            alert("Login required");
-            navigate("/");
+        // IF NOT LOGIN
+        if (
+            teacher === null ||
+            teacher === undefined ||
+            teacher === ""
+        ) {
+
+            alert("Please Login First");
+
+            // REDIRECT LOGIN PAGE
+            navigate("/teacher-login");
+
+            return;
         }
 
-    }, []);
+        // FETCH SUBMISSIONS
+        fetchData();
 
-    // ================= FETCH DATA =================
+    }, [navigate]);
+
+    // ================= FETCH SUBMISSIONS =================
+
     const fetchData = async () => {
 
         try {
 
             setLoading(true);
 
-            const token = localStorage.getItem("token");
-
-            const res = await axios.get(
-                "http://127.0.0.1:8000/api/submissions/",
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
+            const response = await axios.get(
+                "http://127.0.0.1:8000/api/submissions/"
             );
 
-            setData(res.data);
+            console.log(response.data);
 
-        } catch (err) {
+            setData(response.data);
 
-            console.log("FETCH ERROR:", err);
+        } catch (error) {
+
+            console.log(error);
+
+            setErrorMsg("Unable To Fetch Submissions");
 
         } finally {
 
             setLoading(false);
 
         }
+
     };
 
-    // ================= INITIAL FETCH =================
-    useEffect(() => {
-        fetchData();
-    }, []);
-
     // ================= AUTO REFRESH =================
+
     useEffect(() => {
+
+        const teacher = localStorage.getItem("teacher");
+
+        if (!teacher) return;
 
         const interval = setInterval(() => {
+
             fetchData();
-        }, 3000);
+
+        }, 5000);
 
         return () => clearInterval(interval);
 
     }, []);
 
-    // ================= INSTANT UPDATE EVENT =================
-    useEffect(() => {
-
-        const handler = () => {
-            fetchData();
-        };
-
-        window.addEventListener("evaluationUpdated", handler);
-
-        return () => {
-            window.removeEventListener("evaluationUpdated", handler);
-        };
-
-    }, []);
-
     // ================= TOTAL =================
+
     const calculateTotal = () => {
 
         return (
@@ -106,6 +110,7 @@ export default function Evaluation() {
     };
 
     // ================= SAVE EVALUATION =================
+
     const save = async () => {
 
         setErrorMsg("");
@@ -113,13 +118,12 @@ export default function Evaluation() {
 
         if (!selected) {
 
-            setErrorMsg("No submission selected");
+            setErrorMsg("Select Submission");
+
             return;
         }
 
         try {
-
-            const token = localStorage.getItem("token");
 
             const response = await axios.patch(
                 `http://127.0.0.1:8000/api/submissions/${selected.id}/`,
@@ -131,292 +135,267 @@ export default function Evaluation() {
                     marks: calculateTotal(),
                     feedback: feedback,
                     status: "Evaluated"
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    }
                 }
             );
 
-            console.log("SUCCESS:", response.data);
+            console.log(response.data);
 
-            // ================= SUCCESS MESSAGE =================
             setSuccessMsg("Evaluation Saved Successfully");
 
-            // ================= UPDATE LOCAL DATA IMMEDIATELY =================
-            const updatedData = data.map((item) => {
-
-                if (item.id === selected.id) {
-
-                    return {
-                        ...item,
-                        code_quality: Number(codeQuality),
-                        documentation: Number(documentation),
-                        presentation: Number(presentation),
-                        performance: Number(performance),
-                        marks: calculateTotal(),
-                        feedback: feedback,
-                        status: "Evaluated"
-                    };
-                }
-
-                return item;
-            });
-
-            setData(updatedData);
-
-            // ================= UPDATE SELECTED =================
-            setSelected({
-                ...selected,
-                code_quality: Number(codeQuality),
-                documentation: Number(documentation),
-                presentation: Number(presentation),
-                performance: Number(performance),
-                marks: calculateTotal(),
-                feedback: feedback,
-                status: "Evaluated"
-            });
-
-            // ================= GLOBAL EVENT =================
-            // admin dashboard + student dashboard refresh
-            window.dispatchEvent(new Event("evaluationUpdated"));
-
-            // ================= REFRESH FROM DATABASE =================
             fetchData();
 
-        } catch (err) {
+        } catch (error) {
 
-            console.log("FULL ERROR:", err);
+            console.log(error);
 
-            if (err.response) {
+            setErrorMsg("Error Saving Evaluation");
 
-                setErrorMsg(
-                    JSON.stringify(err.response.data, null, 2)
-                );
-
-            } else {
-
-                setErrorMsg("Server not responding");
-
-            }
         }
+
     };
+
+    // ================= LOGOUT =================
+
+    const logout = () => {
+
+        localStorage.removeItem("teacher");
+
+        alert("Logout Successful");
+
+        navigate("/teacher-login");
+    };
+
+    // ================= UI =================
 
     return (
 
         <div className="container mt-4">
 
             {/* HEADER */}
-            <div className="d-flex justify-content-between mb-3">
 
-                <h2>Evaluation Panel</h2>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+
+                <h2>Teacher Evaluation Panel</h2>
 
                 <button
-                    className="btn btn-dark"
-                    onClick={() => navigate("/dashboard")}
+                    className="btn btn-danger"
+                    onClick={logout}
                 >
-                    Back
+                    Logout
                 </button>
 
             </div>
 
-            {/* SUCCESS MESSAGE */}
-            {successMsg && (
+            {/* SUCCESS */}
+
+            {
+                successMsg &&
                 <div className="alert alert-success">
                     {successMsg}
                 </div>
-            )}
+            }
 
-            {/* ERROR MESSAGE */}
-            {errorMsg && (
+            {/* ERROR */}
+
+            {
+                errorMsg &&
                 <div className="alert alert-danger">
-                    <b>Error:</b>
-
-                    <pre>{errorMsg}</pre>
+                    {errorMsg}
                 </div>
-            )}
+            }
 
             <div className="row">
 
                 {/* LEFT SIDE */}
+
                 <div className="col-md-5">
 
-                    {loading && (
+                    {
+                        loading &&
                         <div className="alert alert-info">
                             Loading...
                         </div>
-                    )}
+                    }
 
-                    {!loading && data.length === 0 && (
+                    {
+                        !loading && data.length === 0 &&
                         <div className="alert alert-warning">
-                            No submissions found
+                            No Submissions Found
                         </div>
-                    )}
+                    }
 
-                    {data.map((item) => (
+                    {
+                        data.map((item) => (
 
-                        <div
-                            key={item.id}
-                            className="card p-3 mb-2 shadow-sm"
-                            style={{
-                                cursor: "pointer",
-                                border:
-                                    selected?.id === item.id
-                                        ? "2px solid green"
-                                        : "1px solid #ddd"
-                            }}
-                            onClick={() => {
+                            <div
+                                key={item.id}
+                                className="card p-3 mb-3 shadow-sm"
+                                style={{
+                                    cursor: "pointer",
+                                    border:
+                                        selected?.id === item.id
+                                            ? "2px solid green"
+                                            : "1px solid #ddd"
+                                }}
+                                onClick={() => {
 
-                                setSelected(item);
+                                    setSelected(item);
 
-                                setCodeQuality(item.code_quality || "");
-                                setDocumentation(item.documentation || "");
-                                setPresentation(item.presentation || "");
-                                setPerformance(item.performance || "");
-                                setFeedback(item.feedback || "");
+                                    setCodeQuality(item.code_quality || "");
+                                    setDocumentation(item.documentation || "");
+                                    setPresentation(item.presentation || "");
+                                    setPerformance(item.performance || "");
+                                    setFeedback(item.feedback || "");
 
-                                setErrorMsg("");
-                                setSuccessMsg("");
-                            }}
-                        >
+                                }}
+                            >
 
-                            <h5>{item.title}</h5>
+                                <h5>{item.title}</h5>
 
-                            <div>
-                                <b>Student:</b> {item.student_name}
+                                <p>
+                                    <b>Student:</b> {item.student_name}
+                                </p>
+
+                                <p>
+                                    <b>Status:</b> {item.status}
+                                </p>
+
+                                <p>
+                                    <b>Marks:</b> {item.marks || 0}
+                                </p>
+
                             </div>
 
-                            <div>
-                                <b>Status:</b> {item.status}
-                            </div>
-
-                            <div>
-                                <b>Marks:</b> {item.marks || 0}
-                            </div>
-
-                        </div>
-                    ))}
+                        ))
+                    }
 
                 </div>
 
                 {/* RIGHT SIDE */}
+
                 <div className="col-md-7">
 
-                    {!selected ? (
+                    {
+                        !selected ? (
 
-                        <div className="alert alert-secondary">
-                            Select a submission
-                        </div>
+                            <div className="alert alert-secondary">
+                                Select Submission
+                            </div>
 
-                    ) : (
+                        ) : (
 
-                        <div className="card p-4 shadow">
+                            <div className="card p-4 shadow">
 
-                            <h3>{selected.title}</h3>
+                                <h3>{selected.title}</h3>
 
-                            <hr />
+                                <hr />
 
-                            {/* CODE QUALITY */}
-                            <label className="mb-1">
-                                Code Quality
-                            </label>
+                                {/* CODE QUALITY */}
 
-                            <input
-                                type="number"
-                                className="form-control mb-3"
-                                placeholder="Enter marks"
-                                value={codeQuality}
-                                onChange={(e) =>
-                                    setCodeQuality(e.target.value)
-                                }
-                            />
+                                <label className="mb-1">
+                                    Code Quality
+                                </label>
 
-                            {/* DOCUMENTATION */}
-                            <label className="mb-1">
-                                Documentation
-                            </label>
+                                <input
+                                    type="number"
+                                    className="form-control mb-3"
+                                    value={codeQuality}
+                                    onChange={(e) =>
+                                        setCodeQuality(e.target.value)
+                                    }
+                                />
 
-                            <input
-                                type="number"
-                                className="form-control mb-3"
-                                placeholder="Enter marks"
-                                value={documentation}
-                                onChange={(e) =>
-                                    setDocumentation(e.target.value)
-                                }
-                            />
+                                {/* DOCUMENTATION */}
 
-                            {/* PRESENTATION */}
-                            <label className="mb-1">
-                                Presentation
-                            </label>
+                                <label className="mb-1">
+                                    Documentation
+                                </label>
 
-                            <input
-                                type="number"
-                                className="form-control mb-3"
-                                placeholder="Enter marks"
-                                value={presentation}
-                                onChange={(e) =>
-                                    setPresentation(e.target.value)
-                                }
-                            />
+                                <input
+                                    type="number"
+                                    className="form-control mb-3"
+                                    value={documentation}
+                                    onChange={(e) =>
+                                        setDocumentation(e.target.value)
+                                    }
+                                />
 
-                            {/* PERFORMANCE */}
-                            <label className="mb-1">
-                                Performance
-                            </label>
+                                {/* PRESENTATION */}
 
-                            <input
-                                type="number"
-                                className="form-control mb-3"
-                                placeholder="Enter marks"
-                                value={performance}
-                                onChange={(e) =>
-                                    setPerformance(e.target.value)
-                                }
-                            />
+                                <label className="mb-1">
+                                    Presentation
+                                </label>
 
-                            {/* TOTAL */}
-                            <div className="alert alert-primary">
+                                <input
+                                    type="number"
+                                    className="form-control mb-3"
+                                    value={presentation}
+                                    onChange={(e) =>
+                                        setPresentation(e.target.value)
+                                    }
+                                />
 
-                                <h5>
-                                    Total Marks : {calculateTotal()}
-                                </h5>
+                                {/* PERFORMANCE */}
+
+                                <label className="mb-1">
+                                    Performance
+                                </label>
+
+                                <input
+                                    type="number"
+                                    className="form-control mb-3"
+                                    value={performance}
+                                    onChange={(e) =>
+                                        setPerformance(e.target.value)
+                                    }
+                                />
+
+                                {/* TOTAL */}
+
+                                <div className="alert alert-primary">
+
+                                    <h5>
+                                        Total Marks :
+                                        {calculateTotal()}
+                                    </h5>
+
+                                </div>
+
+                                {/* FEEDBACK */}
+
+                                <label className="mb-1">
+                                    Feedback
+                                </label>
+
+                                <textarea
+                                    className="form-control mb-3"
+                                    rows="4"
+                                    value={feedback}
+                                    onChange={(e) =>
+                                        setFeedback(e.target.value)
+                                    }
+                                />
+
+                                {/* BUTTON */}
+
+                                <button
+                                    className="btn btn-success w-100"
+                                    onClick={save}
+                                >
+                                    Save Evaluation
+                                </button>
 
                             </div>
 
-                            {/* FEEDBACK */}
-                            <label className="mb-1">
-                                Feedback
-                            </label>
-
-                            <textarea
-                                className="form-control mb-3"
-                                rows="4"
-                                placeholder="Enter feedback"
-                                value={feedback}
-                                onChange={(e) =>
-                                    setFeedback(e.target.value)
-                                }
-                            />
-
-                            {/* SAVE BUTTON */}
-                            <button
-                                className="btn btn-success w-100"
-                                onClick={save}
-                            >
-                                Save Evaluation
-                            </button>
-
-                        </div>
-                    )}
+                        )
+                    }
 
                 </div>
 
             </div>
 
         </div>
+
     );
+
 }

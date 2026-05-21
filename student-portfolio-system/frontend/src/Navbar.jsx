@@ -1,6 +1,14 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
+
+    const navigate = useNavigate();
+    const role = localStorage.getItem("role");
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate("/");
+    };
 
     return (
 
@@ -28,40 +36,73 @@ export default function Navbar() {
 
                     <ul className="navbar-nav ms-auto">
 
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/">
-                                Home
-                            </Link>
-                        </li>
+                        {role === "student" && (
+                            <>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/dashboard">
+                                        Dashboard
+                                    </Link>
+                                </li>
 
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/submit">
-                                Submission
-                            </Link>
-                        </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/submit">
+                                        Submission
+                                    </Link>
+                                </li>
 
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/history">
-                                History
-                            </Link>
-                        </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/history">
+                                        History
+                                    </Link>
+                                </li>
 
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/evaluation">
-                                Evaluation
-                            </Link>
-                        </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/portfolio">
+                                        Portfolio
+                                    </Link>
+                                </li>
+                            </>
+                        )}
 
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/portfolio">
-                                Portfolio
-                            </Link>
-                        </li>
+                        {role === "teacher" && (
+                            <>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/teacher-dashboard">
+                                        Teacher Dashboard
+                                    </Link>
+                                </li>
 
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/admin">
-                                Admin
-                            </Link>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/evaluation">
+                                        Evaluation
+                                    </Link>
+                                </li>
+
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/preview">
+                                        Preview View
+                                    </Link>
+                                </li>
+                            </>
+                        )}
+
+                        {role === "admin" && (
+                            <>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/admin">
+                                        Admin Dashboard
+                                    </Link>
+                                </li>
+                            </>
+                        )}
+
+                        <li className="nav-item ms-3">
+                            <button
+                                className="btn btn-danger btn-sm"
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </button>
                         </li>
 
                     </ul>
@@ -72,5 +113,5 @@ export default function Navbar() {
 
         </nav>
 
-    )
+    );
 }

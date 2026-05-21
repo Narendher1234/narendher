@@ -8,6 +8,10 @@ export default function PortfolioPage() {
 
     const [submissions, setSubmissions] = useState([]);
     const [selectedWorks, setSelectedWorks] = useState([]);
+    const [selectedWork, setSelectedWork] = useState(null);
+    const [selectedWorkAI, setSelectedWorkAI] = useState(null);
+    const [bestWork, setBestWork] = useState(null);
+    const [bestWorkAI, setBestWorkAI] = useState(null);
     const [portfolio, setPortfolio] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -81,6 +85,93 @@ export default function PortfolioPage() {
         }
     };
 
+    const generateAssignmentDetails = (item) => {
+        if (!item) return null;
+
+        const tags = item.tags
+            ? item.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+            : [];
+
+        const techText = tags.length
+            ? `It demonstrates skills in ${tags.join(", ")}.`
+            : "It demonstrates general academic and technical skills.";
+
+        const statusText = item.status
+            ? `The current status of this submission is ${item.status}.`
+            : "The current status of this submission is not available yet.";
+
+        const marksText = item.marks !== null && item.marks !== undefined
+            ? `The teacher assigned a score of ${item.marks}.`
+            : "This work is still pending evaluation.";
+
+        const feedbackText = item.feedback
+            ? `Teacher feedback: ${item.feedback}`
+            : "No teacher feedback has been recorded yet.";
+
+        const summary = `AI Assignment Insight for "${item.title}": ${item.description || "No description was provided for this assignment."} ${techText} ${statusText} ${marksText} ${feedbackText}`;
+
+        const bulletPoints = [
+            `Project title: ${item.title}`,
+            `Subject: ${item.subject || "Not specified"}`,
+            `Focus areas: ${tags.length ? tags.join(", ") : "General coursework"}`,
+            `Teacher comments: ${item.feedback || "None"}`,
+            `Evaluation state: ${item.status || "Unknown"}`
+        ];
+
+        return {
+            summary,
+            bullets: bulletPoints
+        };
+    };
+
+    const selectWork = (item) => {
+        setSelectedWork(item);
+        setSelectedWorkAI(generateAssignmentDetails(item));
+    };
+
+    const scoreWork = (item) => {
+        let score = 0;
+
+        if (item.marks !== null && item.marks !== undefined) {
+            score += Number(item.marks) * 2;
+        }
+        if (item.status === "Evaluated") score += 20;
+        if (item.tags) score += item.tags.split(",").length * 3;
+        if (item.feedback) score += Math.min(15, item.feedback.length / 20);
+        if (item.description) score += Math.min(10, item.description.length / 50);
+
+        if (item.status === "Pending") score -= 5;
+        if (item.status === "Rejected") score -= 10;
+
+        return score;
+    };
+
+    const determineBestAssignment = (items) => {
+        if (!items || items.length === 0) {
+            setBestWork(null);
+            setBestWorkAI(null);
+            return;
+        }
+
+        const sorted = [...items].sort((a, b) => scoreWork(b) - scoreWork(a));
+        const winner = sorted[0];
+
+        const explanation = generateAssignmentDetails(winner);
+
+        setBestWork(winner);
+        setBestWorkAI({
+            summary: `Based on marks, evaluation status, task detail, and skill tags, the AI recommends "${winner.title}" as the best work. ${explanation.summary}`,
+            bullets: [
+                `Highest estimated score: ${scoreWork(winner).toFixed(0)}`,
+                `Subject: ${winner.subject || "Not specified"}`,
+                `Status: ${winner.status || "Unknown"}`,
+                `AI picked it because it has strong task detail, tags, and teacher feedback.`
+            ]
+        });
+        setSelectedWork(winner);
+        setSelectedWorkAI(explanation);
+    };
+
     // ================= PORTFOLIO GENERATION =================
     const generatePortfolio = () => {
 
@@ -140,6 +231,7 @@ export default function PortfolioPage() {
                                 <th>Status</th>
                                 <th>Marks</th>
                                 <th>File</th>
+                                <th>Details</th>
                             </tr>
                         </thead>
 
@@ -160,12 +252,28 @@ export default function PortfolioPage() {
                                     <td>{item.status}</td>
                                     <td>{item.marks ?? "Pending"}</td>
 
-                                    <td>
-                                        {item.file ? (
+                                    <td>{item.file ? (
                                             <a href={item.file} target="_blank" rel="noreferrer">
                                                 View
                                             </a>
-                                        ) : "No File"}
+                                        ) : "No File"}</td>
+
+                                    <td>
+                                        <div style={styles.detailsCell}>
+                                            <button
+                                                type="button"
+                                                onClick={() => selectWork(item)}
+                                                style={styles.detailBtn}
+                                            >
+                                                View AI Details
+                                            </button>
+
+                                            {bestWork?.id === item.id && (
+                                                <span style={styles.badge}>
+                                                    AI Best
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
 
                                 </tr>
@@ -174,9 +282,75 @@ export default function PortfolioPage() {
                     </table>
                 )}
 
-                <button onClick={generatePortfolio} style={styles.generateBtn}>
-                    Generate AI Portfolio
+                <button onClick={() => {
+                    if (selectedWorks.length === 0) {
+                        alert("Select at least one work");
+                        return;
+                    }
+                    determineBestAssignment(selectedWorks);
+                    generatePortfolio();
+                }} style={styles.generateBtn}>
+                    Generate AI Portfolio & Recommend Best Work
                 </button>
+
+            </div>
+
+            {/* BEST ASSIGNMENT */}
+            <div style={styles.card}>
+                {!bestWork ? (
+                    <div style={{ textAlign: "center" }}>
+                        <h3>Best Assignment Recommendation</h3>
+                        <p>AI will suggest the strongest work after you select assignments.</p>
+                    </div>
+                ) : (
+                    <>
+                        <h3 style={{ color: "#2563eb" }}>Best Assignment: {bestWork.title}</h3>
+                        <p style={styles.copyText}>{bestWorkAI?.summary}</p>
+
+                        <div style={styles.infoGrid}>
+                            <div><strong>Description:</strong> {bestWork.description || "No description available."}</div>
+                            <div><strong>Subject:</strong> {bestWork.subject || "Not specified"}</div>
+                            <div><strong>Tags:</strong> {bestWork.tags || "None"}</div>
+                            <div><strong>Status:</strong> {bestWork.status || "Unknown"}</div>
+                            <div><strong>Marks:</strong> {bestWork.marks ?? "Pending"}</div>
+                            <div><strong>Feedback:</strong> {bestWork.feedback || "No teacher feedback"}</div>
+                            {bestWork.file && (
+                                <div><strong>File:</strong> <a href={bestWork.file} target="_blank" rel="noreferrer">View submission</a></div>
+                            )}
+                        </div>
+
+                        <h4>Why this work?</h4>
+                        <ul>
+                            {bestWorkAI?.bullets.map((bullet, idx) => (
+                                <li key={idx}>{bullet}</li>
+                            ))}
+                        </ul>
+                    </>
+                )}
+            </div>
+
+            {/* SELECTED WORK DETAILS */}
+            <div style={styles.card}>
+
+                {!selectedWork ? (
+                    <div style={{ textAlign: "center" }}>
+                        <h3>Selected Work</h3>
+                        <p>Click "View AI Details" for any work to read more about that assignment.</p>
+                    </div>
+                ) : (
+                    <>
+                        <h3 style={{ color: "#2563eb" }}>AI Details for "{selectedWork.title}"</h3>
+
+                        <p style={styles.copyText}>{selectedWorkAI?.summary}</p>
+
+                        <h4>Key highlights</h4>
+                        <ul>
+                            {selectedWorkAI?.bullets.map((bullet, idx) => (
+                                <li key={idx}>{bullet}</li>
+                            ))}
+                        </ul>
+                    </>
+                )}
 
             </div>
 
@@ -299,6 +473,36 @@ const styles = {
         borderRadius: "10px"
     },
 
+    detailBtn: {
+        background: "#2563eb",
+        color: "white",
+        border: "none",
+        padding: "8px 12px",
+        borderRadius: "8px",
+        cursor: "pointer"
+    },
+
+    detailsCell: {
+        display: "flex",
+        alignItems: "center",
+        gap: "10px"
+    },
+
+    badge: {
+        background: "#fde047",
+        color: "#92400e",
+        padding: "4px 8px",
+        borderRadius: "999px",
+        fontSize: "12px",
+        fontWeight: "700"
+    },
+
+    copyText: {
+        lineHeight: "1.7",
+        color: "#334155",
+        marginBottom: "12px"
+    },
+
     alert: {
         background: "#fee2e2",
         padding: "10px",
@@ -309,6 +513,16 @@ const styles = {
         display: "flex",
         gap: "10px",
         flexWrap: "wrap"
+    },
+
+    infoGrid: {
+        display: "grid",
+        gap: "10px",
+        marginBottom: "15px",
+        padding: "15px",
+        background: "#f8fafc",
+        borderRadius: "12px",
+        border: "1px solid #e2e8f0"
     },
 
     skill: {
