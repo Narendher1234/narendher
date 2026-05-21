@@ -1,0 +1,15 @@
+env/
+.env
+__pycache__/
+*.pyc
+.vscode/
+node_modules/
+dist/
+*.zip
+.DS_Store
+AppData/
+*.ipynb
+frontend/dist/
+frontend/node_modules/
+backend/env/
+/.venv/

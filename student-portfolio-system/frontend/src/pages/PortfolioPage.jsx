@@ -23,7 +23,7 @@ export default function PortfolioPage() {
 
     const fetchSubmissions = async () => {
         try {
-            const res = await axios.get("http://127.0.0.1:8000/api/submissions/");
+            const res = await axios.get("/api/submissions/");
             setSubmissions(res.data);
         } catch (err) {
             console.log(err);

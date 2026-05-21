@@ -29,7 +29,7 @@ export default function TeacherLogin() {
 
         try {
             const res = await axios.post(
-                "http://127.0.0.1:8000/api/teacher-login/",
+                "/api/teacher-login/",
                 { username, password }
             );
 

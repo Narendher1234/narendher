@@ -21,7 +21,7 @@ export default function TeacherPage() {
         try {
 
             const res = await axios.get(
-                "http://127.0.0.1:8000/api/submissions/"
+                "/api/submissions/"
             );
 
             setSubmissions(res.data);
@@ -62,7 +62,7 @@ export default function TeacherPage() {
             }
 
             await axios.patch(
-                `http://127.0.0.1:8000/api/submissions/${id}/`,
+                `/api/submissions/${id}/`,
                 {
                     code_quality: data.code_quality || 0,
                     documentation: data.documentation || 0,

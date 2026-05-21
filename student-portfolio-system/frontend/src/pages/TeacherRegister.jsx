@@ -31,7 +31,7 @@ export default function TeacherRegister() {
 
         try {
             const res = await axios.post(
-                "http://127.0.0.1:8000/api/teacher-register/",
+                "/api/teacher-register/",
                 {
                     username,
                     password,

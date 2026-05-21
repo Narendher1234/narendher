@@ -30,7 +30,7 @@ export default function Login() {
             if (role === "teacher") {
 
                 const res = await axios.post(
-                    "http://127.0.0.1:8000/api/teacher-login/",
+                    "/api/teacher-login/",
                     {
                         username,
                         password
@@ -54,7 +54,7 @@ export default function Login() {
             // ================= STUDENT + ADMIN LOGIN =================
 
             const res = await axios.post(
-                "http://127.0.0.1:8000/api/token/",
+                "/api/token/",
                 {
                     username,
                     password

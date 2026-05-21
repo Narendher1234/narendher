@@ -20,7 +20,7 @@ export default function PreviewPage() {
         try {
 
             const response = await axios.get(
-                "http://127.0.0.1:8000/api/submissions/"
+                "/api/submissions/"
             );
 
             setProjects(response.data);
@@ -39,7 +39,7 @@ export default function PreviewPage() {
         try {
 
             const response = await axios.get(
-                "http://127.0.0.1:8000/api/portfolio/"
+                "/api/portfolio/"
             );
 
             setPortfolio(response.data[0]);

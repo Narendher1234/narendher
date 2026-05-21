@@ -58,7 +58,7 @@ export default function Evaluation() {
             setLoading(true);
 
             const response = await axios.get(
-                "http://127.0.0.1:8000/api/submissions/"
+                "/api/submissions/"
             );
 
             console.log(response.data);
@@ -126,7 +126,7 @@ export default function Evaluation() {
         try {
 
             const response = await axios.patch(
-                `http://127.0.0.1:8000/api/submissions/${selected.id}/`,
+                `/api/submissions/${selected.id}/`,
                 {
                     code_quality: Number(codeQuality),
                     documentation: Number(documentation),

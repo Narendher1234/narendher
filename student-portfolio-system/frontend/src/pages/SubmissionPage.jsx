@@ -19,7 +19,7 @@ export default function SubmissionPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await axios.get("http://127.0.0.1:8000/api/submissions/");
+            const res = await axios.get("/api/submissions/");
             setSubmissions(res.data);
         } catch (error) {
             console.log(error);
@@ -45,7 +45,7 @@ export default function SubmissionPage() {
 
         try {
             await axios.post(
-                "http://127.0.0.1:8000/api/submissions/",
+                "/api/submissions/",
                 formData,
                 { headers: { "Content-Type": "multipart/form-data" } }
             );

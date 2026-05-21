@@ -40,7 +40,7 @@ export default function TeacherDashboard() {
         try {
 
 const res = await axios.get(
-            "http://127.0.0.1:8000/api/submissions/"
+            "/api/submissions/"
             );
 
             setData(res.data);
@@ -71,7 +71,7 @@ const res = await axios.get(
         formData.append("file", emptyFile);
 
         await axios.post(
-            "http://127.0.0.1:8000/api/submissions/",
+            "/api/submissions/",
             formData,
             {
                 headers: {
@@ -91,7 +91,7 @@ const res = await axios.get(
     const saveEvaluation = async () => {
 
         await axios.patch(
-            `http://127.0.0.1:8000/api/submissions/${selected.id}/`,
+            `/api/submissions/${selected.id}/`,
             {
                 marks,
                 feedback,

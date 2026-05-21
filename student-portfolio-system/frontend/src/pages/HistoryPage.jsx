@@ -13,7 +13,7 @@ export default function HistoryPage() {
 
     const fetchData = async () => {
         try {
-            const res = await axios.get("http://127.0.0.1:8000/api/submissions/");
+            const res = await axios.get("/api/submissions/");
             setData(res.data);
         } catch (err) {
             console.log(err);
